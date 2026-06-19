@@ -10,6 +10,8 @@
 </head>
 <body>
     <h1>🎈 Scegli un Gioco! 🎈</h1>
+    <a class="pulsante" href="coppie.html">🌸 Il Bosco Incantato</a>
+    <a class="pulsante" href="coppie.html">🌸 L'incastro Magico</a>
     <a class="pulsante" href="coppie.html">🌸 Il Giardino delle Coppie</a>
     </body>
 </html>
