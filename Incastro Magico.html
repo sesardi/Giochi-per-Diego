@@ -50,7 +50,7 @@
             background: rgba(255, 255, 255, 0.2);
             padding: 8px 20px;
             border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15 rgba(0,0,0,0.2);
             text-align: center;
             flex-grow: 1;
             margin: 0 10px;
@@ -138,10 +138,15 @@
             font-weight: bold;
             color: #333;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            touch-action: none; /* Impedisce lo scroll della pagina su APK mentre si trascina */
+            touch-action: none; /* Impedisce movimenti anomali e scroll sia su browser che APK */
             user-select: none;
             position: relative;
             z-index: 5;
+            cursor: grab;
+        }
+
+        .blocco:active {
+            cursor: grabbing;
         }
 
         /* Stile speciale per l'elemento che viene trascinato */
@@ -244,14 +249,12 @@
             containerElementi.innerHTML = '';
             containerTarget.innerHTML = '';
 
-            // 1. Scegli 3 valori casuali unici
             let valoriTurno = [];
             while(valoriTurno.length < 3) {
                 let v = modalitaCorrente === 'numeri' ? Math.floor(Math.random() * 10) + 1 : alfabeto[Math.floor(Math.random() * alfabeto.length)];
                 if(!valoriTurno.includes(v)) valoriTurno.push(v);
             }
 
-            // 2. Crea le sagome fisse in basso (nell'ordine originale)
             valoriTurno.forEach(val => {
                 let t = document.createElement('div');
                 t.className = 'sagoma';
@@ -260,44 +263,40 @@
                 containerTarget.appendChild(t);
             });
 
-            // 3. Mescola l'ordine per i blocchi da trascinare in alto
             let valoriMescolati = [...valoriTurno].sort(() => Math.random() - 0.5);
 
-            // 4. Crea i blocchi colorati trascinabili
             valoriMescolati.forEach(val => {
                 let b = document.createElement('div');
                 b.className = 'blocco';
                 b.innerText = val;
                 b.style.backgroundColor = colori[Math.floor(Math.random() * colori.length)];
-                b.style.color = '#white';
                 b.style.color = 'white';
                 b.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
-
-                // Salviamo il valore per il controllo dell'incastro
                 b.dataset.valore = val;
 
-                // Attiviamo il trascinamento touch (ottimizzato per APK)
+                // Attiviamo il Drag & Drop unificato (PC + Mobile)
                 attivaDragAndDrop(b);
 
                 containerElementi.appendChild(b);
             });
         }
 
+        // FUNZIONE TRASCINAMENTO OTTIMIZZATA PER MOUSE E TOUCH (Pointer Events)
         function attivaDragAndDrop(elemento) {
-            let infoTouch = { posXIniziale: 0, posYIniziale: 0, objX: 0, objY: 0 };
+            let infoPointer = { offsetX: 0, offsetY: 0, isDragging: false };
 
-            elemento.addEventListener('touchstart', function(e) {
-                let t = e.touches[0];
+            elemento.addEventListener('pointerdown', function(e) {
+                infoPointer.isDragging = true;
                 elemento.classList.add('trascinamento');
+                
+                // Cattura l'ID del puntatore per evitare perdite di fuoco fuori dalla finestra
+                elemento.setPointerCapture(e.pointerId);
 
-                // Salviamo la posizione di partenza del blocco (relativa a se stesso)
                 let rect = elemento.getBoundingClientRect();
-
-                // Coordinate iniziali del tocco e del blocco
-                infoTouch.posXIniziale = t.clientX;
-                infoTouch.posYIniziale = t.clientY;
-                infoTouch.objX = elemento.offsetLeft;
-                infoTouch.objY = elemento.offsetTop;
+                
+                // Salviamo la distanza tra il punto esatto in cui clicchiamo e l'angolo del blocco
+                infoPointer.offsetX = e.clientX - rect.left;
+                infoPointer.offsetY = e.clientY - rect.top;
 
                 elemento.style.position = 'fixed';
                 elemento.style.left = rect.left + 'px';
@@ -305,30 +304,25 @@
                 elemento.style.margin = '0';
             });
 
-            elemento.addEventListener('touchmove', function(e) {
-                if (!elemento.classList.contains('trascinamento')) return;
-                let t = e.touches[0];
+            elemento.addEventListener('pointermove', function(e) {
+                if (!infoPointer.isDragging) return;
 
-                // Calcoliamo lo spostamento
-                let deltaX = t.clientX - infoTouch.posXIniziale;
-                let deltaY = t.clientY - infoTouch.posYIniziale;
-
-                // Muoviamo il blocco seguendo il dito
-                let rect = document.getElementById('contenitore-elementi').getBoundingClientRect();
-                elemento.style.left = (infoTouch.objX + deltaX) + 'px';
-                elemento.style.top = (infoTouch.top + deltaY || infoTouch.posYIniziale + deltaY - 50) + 'px';
+                // Muove il blocco centrandolo fluidamente sotto la freccia/dito
+                elemento.style.left = (e.clientX - infoPointer.offsetX) + 'px';
+                elemento.style.top = (e.clientY - infoPointer.offsetY) + 'px';
             });
 
-            elemento.addEventListener('touchend', function(e) {
+            elemento.addEventListener('pointerup', function(e) {
+                if (!infoPointer.isDragging) return;
+                infoPointer.isDragging = false;
                 elemento.classList.remove('trascinamento');
+                elemento.releasePointerCapture(e.pointerId);
 
-                // Individuiamo la sagoma bersaglio corrispondente
                 let val = elemento.dataset.valore;
                 let targetSagoma = document.getElementById('target-' + val);
                 let rectTarget = targetSagoma.getBoundingClientRect();
                 let rectElemento = elemento.getBoundingClientRect();
 
-                // Calcolo della distanza dal centro dell'incastro
                 let centroTargetX = rectTarget.left + rectTarget.width / 2;
                 let centroTargetY = rectTarget.top + rectTarget.height / 2;
                 let centroElemX = rectElemento.left + rectElemento.width / 2;
@@ -336,21 +330,18 @@
 
                 let distanza = Math.hypot(centroTargetX - centroElemX, centroTargetY - centroElemY);
 
-                // Se la distanza è inferiore a 75 pixel, l'incastro ha successo!
-                if (distanza < 75) {
+                if (distanza < 85) { // Tolleranza d'incastro leggermente aumentata per miglior fluidità
                     riproduciSuono('pop');
                     parla(val.toString());
 
-                    // Blocca l'elemento sopra la sagoma
                     elemento.style.position = 'absolute';
                     elemento.style.left = targetSagoma.offsetLeft + 'px';
                     elemento.style.top = document.getElementById('contenitore-target').offsetTop + 'px';
-                    elemento.style.pointerEvents = 'none'; // Non si può più muovere
+                    elemento.style.pointerEvents = 'none'; 
                     elemento.style.transform = 'scale(1.05)';
 
                     completatiInQuestoTurno++;
 
-                    // Se tutti e 3 sono incastrati, il livello è vinto!
                     if (completatiInQuestoTurno === 3) {
                         setTimeout(() => {
                             riproduciSuono('vittoria');
@@ -359,7 +350,6 @@
                         }, 500);
                     }
                 } else {
-                    // Errore: l'elemento ritorna indietro fluidamente
                     riproduciSuono('errore');
                     elemento.style.position = '';
                     elemento.style.left = '';
