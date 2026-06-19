@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Il Giardino delle Coppie</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #74b9ff 0%, #a1c4fd 100%);
+            overflow: hidden;
+            font-family: 'Arial Round', 'Comic Sans MS', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* SFONDO ANIMATO E ALLEGRO */
+        .sfondo-animato {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .nuvola {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50px;
+            animation: muoviNuvola linear infinite;
+        }
+        .nuvola::before, .nuvola::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+        }
+        .n1 { width: 100px; height: 40px; top: 15%; left: -150px; animation-duration: 25s; }
+        .n2 { width: 150px; height: 50px; top: 40%; left: -200px; animation-duration: 35s; animation-delay: 5s; }
+
+        @keyframes muoviNuvola {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(100vw + 250px)); }
+        }
+
+        .decorazione-festa {
+            position: absolute;
+            font-size: 1.8rem;
+            bottom: -50px;
+            opacity: 0.2;
+            animation: galleggiaInAlto 12s linear infinite;
+        }
+        @keyframes galleggiaInAlto {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.25; }
+            90% { opacity: 0.25; }
+            100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* INTERFACCIA SUPERIORE ANTI-SOVRAPPOSIZIONE */
+        #top-bar {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        #hud {
+            font-size: 4.5vw;
+            @media (min-width: 600px) { font-size: 1.5rem; }
+            font-weight: bold;
+            color: #2c3e50;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 6px 0px rgba(0,0,0,0.1), 0 8px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            flex-grow: 1;
+            margin: 0 10px;
+            backdrop-filter: blur(5px);
+            border: 2px solid #fff;
+        }
+
+        #btn-switch {
+            background: #ff7675;
+            border: 3px solid #fff;
+            border-radius: 20px;
+            padding: 10px 16px;
+            font-size: 3.8vw;
+            @media (min-width: 600px) { font-size: 1.2rem; }
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #c0392b;
+            flex-shrink: 0;
+        }
+        #btn-switch:active { transform: translateY(3px); box-shadow: 0 1px 0px #c0392b; }
+
+        /* SCHERMATA INIZIALE */
+        #schermata-inizio {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #74b9ff, #a1c4fd);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #schermata-inizio h1 {
+            color: white;
+            font-size: 3rem;
+            text-align: center;
+            text-shadow: 3px 3px 0px #ff7675, 0 0 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            padding: 0 15px;
+        }
+        .btn-gioca {
+            background-color: #2ed573;
+            color: white;
+            border: 4px solid #fff;
+            padding: 16px 60px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 0px #26af5f, 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* GRIGLIE DI GIOCO ADATTIVE */
+        .area-gioco {
+            position: absolute;
+            top: 110px;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 5;
+        }
+
+        .riga-tessere {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        /* TESSERE GRAFICHE */
+        .tessera {
+            width: 27vw;
+            height: 27vw;
+            max-width: 130px;
+            max-height: 130px;
+            background: #ffffff;
+            border: 5px solid #fff;
+            border-radius: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, background-color 0.2s, opacity 0.3s;
+            box-sizing: border-box;
+        }
+
+        .tessera.emoji-small {
+            font-size: 1.6rem;
+            padding: 8px;
+            text-align: center;
+            word-break: break-all;
+            line-height: 1.1;
+        }
+
+        .tessera.selezionata {
+            border-color: #f1c40f;
+            background-color: #fff9db;
+            transform: scale(1.1) rotate(2deg);
+            box-shadow: 0 10px 20px rgba(241, 196, 15, 0.4);
+        }
+
+        .tessera.corretta {
+            background-color: #2ed573 !important;
+            border-color: #fff !important;
+            color: white !important;
+            transform: scale(0.1);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes scuoti {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px) rotate(-3deg); }
+            75% { transform: translateX(8px) rotate(3deg); }
+        }
+        .scuoti-errore {
+            animation: scuoti 0.25s ease-in-out 2;
+            border-color: #ff7675 !important;
+            background-color: #ffeaa7 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sfondo-animato">
+        <div class="nuvola n1"></div>
+        <div class="nuvola n2"></div>
+        <div class="decorazione-festa" style="left: 15%; animation-delay: 0s;">🎈</div>
+        <div class="decorazione-festa" style="left: 45%; animation-duration: 15s; animation-delay: 3s;">✨</div>
+        <div class="decorazione-festa" style="left: 75%; animation-duration: 10s; animation-delay: 6s;">🎈</div>
+    </div>
+
+    <div id="schermata-inizio">
+        <h1>🌸 Il Giardino delle Coppie 🌸</h1>
+        <button class="btn-gioca" onclick="iniziaGioco()">GIOCA!</button>
+    </div>
+
+    <div id="top-bar">
+        <button id="btn-switch" onclick="cambiaModalita()">🔤 Lettere</button>
+        <div id="hud"><span id="testo-hud">Trova le coppie dei numeri!</span></div>
+    </div>
+
+    <div class="area-gioco">
+        <div class="riga-tessere" id="riga-simboli"></div>
+        <div class="riga-tessere" id="riga-immagini"></div>
+    </div>
+
+    <script>
+        let modalitaCorrente = 'numeri';
+        let primoSelezionato = null;
+        let coppieIndovinate = 0;
+        let audioCtx = null;
+
+        // PARAMETRI VOCALI DINAMICI
+        let elencoVociItaliane = [];
+        let voceSelezionata = null;
+        let tonoCorrente = 1.2;
+        let velocitaCorrente = 0.85;
+
+        const oggettiNumeri = ['🎈', '⭐️', '🍒', '🐸', '🍎', '🐱', '🌸', '🐟', '🐝', '🍪', '🦁', '🚗', '🍄', '🍦'];
+
+        const databaseLettere = {
+            'A': [{info: 'Ape', img: '🐝'}, {info: 'Albero', img: '🌳'}, {info: 'Anello', img: '💍'}, {info: 'Arcobaleno', img: '🌈'}],
+            'B': [{info: 'Banana', img: '🍌'}, {info: 'Bambola', img: '🪆'}, {info: 'Biscotto', img: '🍪'}, {info: 'Barca', img: '⛵'}],
+            'C': [{info: 'Cane', img: '🐶'}, {info: 'Casa', img: '🏠'}, {info: 'Cavallo', img: '🐴'}, {info: 'Corona', img: '👑'}],
+            'D': [{info: 'Dinosauro', img: '🦖'}, {info: 'Delfino', img: '🐬'}, {info: 'Dado', img: '🎲'}, {info: 'Dente', img: '🦷'}],
+            'E': [{info: 'Elefante', img: '🐘'}, {info: 'Elicottero', img: '🚁'}, {info: 'Erba', img: '🌿'}],
+            'F': [{info: 'Fiore', img: '🌸'}, {info: 'Formica', img: '🐜'}, {info: 'Fuoco', img: '🔥'}, {info: 'Fantasmino', img: '👻'}],
+            'G': [{info: 'Gelato', img: '🍦'}, {info: 'Gatto', img: '🐱'}, {info: 'Gallo', img: '🐓'}, {info: 'Gufo', img: '🦉'}],
+            'H': [{info: 'Hotel', img: '🏨'}, {info: 'Hamburger', img: '🍔'}, {info: 'Hostess', img: '🧑‍✈️'}],
+            'I': [{info: 'Isola', img: '🏝️'}, {info: 'Ippopotamo', img: '🦛'}, {info: 'Ingranaggio', img: '⚙️'}],
+            'J': [{info: 'Jeep', img: '🚙'}, {info: 'Jolly', img: '🃏'}],
+            'K': [{info: 'Kiwi', img: '🥝'}, {info: 'Koala', img: '🐨'}, {info: 'Karateka', img: '🥋'}],
+            'L': [{info: 'Leone', img: '🦁'}, {info: 'Luna', img: '🌙'}, {info: 'Libro', img: '📖'}, {info: 'Limone', img: '🍋'}],
+            'M': [{info: 'Mela', img: '🍎'}, {info: 'Mucca', img: '🐮'}, {info: 'Mago', img: '🧙'}, {info: 'Mano', img: '✋'}],
+            'N': [{info: 'Nave', img: '🚢'}, {info: 'Nuvola', img: '☁️'}, {info: 'Nido', img: '🪺'}],
+            'O': [{info: 'Orso', img: '🐻'}, {info: 'Occhiali', img: '👓'}, {info: 'Orologio', img: '⌚'}, {info: 'Ombrello', img: '☂️'}],
+            'P': [{info: 'Pesce', img: '🐟'}, {info: 'Palla', img: '⚽'}, {info: 'Panda', img: '🐼'}, {info: 'Pulcino', img: '🐥'}],
+            'Q': [{info: 'Quaderno', img: '📒'}, {info: 'Quaglia', img: '🪶'}, {info: 'Formaggio', img: '🧀'}],
+            'R': [{info: 'Rana', img: '🐸'}, {info: 'Regalo', img: '🎁'}, {info: 'Re', img: '👑'}, {info: 'Robot', img: '🤖'}],
+            'S': [{info: 'Sole', img: '☀️'}, {info: 'Scimmia', img: '🐒'}, {info: 'Serpente', img: '🐍'}, {info: 'Stella', img: '⭐'}],
+            'T': [{info: 'Treno', img: '🚂'}, {info: 'Torta', img: '🎂'}, {info: 'Topo', img: '🐭'}, {info: 'Tigre', img: '🐯'}],
+            'U': [{info: 'Uccellino', img: '🐦'}, {info: 'Uovo', img: '🥚'}, {info: 'Uva', img: '🍇'}],
+            'V': [{info: 'Vascello', img: '⛵'}, {info: 'Violino', img: '🎻'}, {info: 'Vulcani', img: '🌋'}],
+            'W': [{info: 'Waffle', img: '🧇'}, {info: 'Wurstel', img: '🌭'}, {info: 'Windsurf', img: '🏄'}],
+            'X': [{info: 'Xilofono', img: '🎼'}, {info: 'Xilofono', img: '🎹'}],
+            'Y': [{info: 'Yogurt', img: '🍦'}, {info: 'Yoyo', img: '🪀'}],
+            'Z': [{info: 'Zebra', img: '🦓'}, {info: 'Zaino', img: '🎒'}, {info: 'Zucca', img: '🎃'}]
+        };
+
+        // CARICAMENTO E PREPARAZIONE DELLE VOCI DI SISTEMA (Anti-metallico)
+        function inizializzaMotoreVoci() {
+            if ('speechSynthesis' in window) {
+                let caricaVoci = () => {
+                    let tutteLeVoci = window.speechSynthesis.getVoices();
+                    // Filtra solo le voci in lingua italiana
+                    elencoVociItaliane = tutteLeVoci.filter(v => v.lang.startsWith('it'));
+
+                    // Priorità assoluta alle voci "Google" o "Local" ad alta fedeltà se disponibili
+                    elencoVociItaliane.sort((a, b) => {
+                        if (a.name.includes('Google') || a.name.includes('natural')) return -1;
+                        if (b.name.includes('Google') || b.name.includes('natural')) return 1;
+                        return 0;
+                    });
+                    mischiaPersonalitaVoce();
+                };
+                caricaVoci();
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = caricaVoci;
+                }
+            }
+        }
+        inizializzaMotoreVoci();
+
+        // CAMBIA PARAMETRI AD OGNI LIVELLO (Crea variabilità tra un gioco e l'altro)
+        function mischiaPersonalitaVoce() {
+            if (elencoVociItaliane.length > 0) {
+                // Sceglie una voce a caso tra quelle italiane disponibili sul device
+                voceSelezionata = elencoVociItaliane[Math.floor(Math.random() * elencoVociItaliane.length)];
+            }
+            // Genera toni e velocità unici ad ogni livello per simulare personaggi differenti
+            tonoCorrente = (Math.random() * (1.4 - 0.9) + 0.9).toFixed(2); // Da profonda (0.9) a cartone animato (1.4)
+            velocitaCorrente = (Math.random() * (0.95 - 0.8) + 0.8).toFixed(2); // Velocità calibrate per bambini
+        }
+
+        function iniziaGioco() {
+            document.getElementById('schermata-inizio').style.display = 'none';
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch(e) { console.log("Audio non supportato"); }
+
+            setTimeout(() => {
+                parla("Trova le coppie dei numeri!");
+                caricaNuovoLivello();
+            }, 600);
+        }
+
+        function parla(testo, callback) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                setTimeout(() => {
+                    let messaggio = new SpeechSynthesisUtterance(testo);
+                    messaggio.lang = 'it-IT';
+
+                    // Applica la voce e la personalità casuale di questo livello
+                    if (voceSelezionata) messaggio.voice = voceSelezionata;
+                    messaggio.pitch = tonoCorrente;
+                    messaggio.rate = velocitaCorrente;
+
+                    if (callback) messaggio.onend = callback;
+                    window.speechSynthesis.speak(messaggio);
+                }, 60);
+            } else if (callback) {
+                callback();
+            }
+        }
+
+        function cambiaModalita() {
+            mischiaPersonalitaVoce(); // Cambia personaggio vocale!
+            if (modalitaCorrente === 'numeri') {
+                modalitaCorrente = 'lettere';
+                document.getElementById('btn-switch').innerText = '🔢 Numeri';
+                document.getElementById('testo-hud').innerText = 'Trova le coppie delle lettere!';
+                parla("Giochiamo con le lettere! Trova le coppie!");
+            } else {
+                modalitaCorrente = 'numeri';
+                document.getElementById('btn-switch').innerText = '🔤 Lettere';
+                document.getElementById('testo-hud').innerText = 'Trova le coppie dei numeri!';
+                parla("Giochiamo con i numeri! Trova le coppie!");
+            }
+            riproduciSuono('click');
+            setTimeout(caricaNuovoLivello, 1000);
+        }
+
+        function caricaNuovoLivello() {
+            primoSelezionato = null;
+            coppieIndovinate = 0;
+
+            const rigaSimboli = document.getElementById('riga-simboli');
+            const rigaImmagini = document.getElementById('riga-immagini');
+            rigaSimboli.innerHTML = '';
+            rigaImmagini.innerHTML = '';
+
+            let coppieScelte = [];
+
+            if (modalitaCorrente === 'lettere') {
+                let chiaviLettere = Object.keys(databaseLettere).sort(() => Math.random() - 0.5).slice(0, 3);
+
+                chiaviLettere.forEach(lettra => {
+                    let varianti = databaseLettere[lettra];
+                    let varianteScelta = varianti[Math.floor(Math.random() * varianti.length)];
+
+                    coppieScelte.push({
+                        id: lettra,
+                        simbolo: lettra,
+                        info: lettra + " come " + varianteScelta.info,
+                        immagine: varianteScelta.img
+                    });
+                });
+            } else {
+                let tuttiINumeri = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].sort(() => Math.random() - 0.5).slice(0, 3);
+
+                tuttiINumeri.forEach(num => {
+                    let stringaImmagine = '';
+                    let infoAudio = '';
+
+                    if (num === 0) {
+                        stringaImmagine = '📦';
+                        infoAudio = 'Zero oggetti!';
+                    } else {
+                        let emojiCasuale = oggettiNumeri[Math.floor(Math.random() * oggettiNumeri.length)];
+                        stringaImmagine = emojiCasuale.repeat(num);
+                        infoAudio = num.toString();
+                    }
+
+                    coppieScelte.push({
+                        id: 'N' + num,
+                        simbolo: num.toString(),
+                        info: infoAudio,
+                        immagine: stringaImmagine
+                    });
+                });
+            }
+
+            let elementiSimbolo = coppieScelte.map(coppia => {
+                let t = document.createElement('div');
+                t.className = 'tessera';
+                t.innerText = coppia.simbolo;
+                t.dataset.id = coppia.id;
+                t.dataset.tipo = 'simbolo';
+                t.dataset.info = coppia.info;
+                t.addEventListener('click', () => gestisciClickTessera(t));
+                return t;
+            });
+
+            let elementiImmagine = coppieScelte.map(coppia => {
+                let t = document.createElement('div');
+                t.className = 'tessera';
+                t.innerText = coppia.immagine;
+                t.dataset.id = coppia.id;
+                t.dataset.tipo = 'immagine';
+                t.dataset.info = coppia.info;
+
+                if (coppia.immagine.length > 3) {
+                    t.classList.add('emoji-small');
+                }
+                t.addEventListener('click', () => gestisciClickTessera(t));
+                return t;
+            });
+
+            elementiSimbolo.sort(() => Math.random() - 0.5);
+            elementiImmagine.sort(() => Math.random() - 0.5);
+
+            elementiSimbolo.forEach(el => rigaSimboli.appendChild(el));
+            elementiImmagine.forEach(el => rigaImmagini.appendChild(el));
+        }
+
+        function gestisciClickTessera(tessera) {
+            if (tessera.classList.contains('corretta') || tessera.classList.contains('scuoti-errore')) return;
+
+            riproduciSuono('click');
+
+            if (!primoSelezionato) {
+                primoSelezionato = tessera;
+                tessera.classList.add('selezionata');
+                return;
+            }
+
+            if (primoSelezionato === tessera) {
+                tessera.classList.remove('selezionata');
+                primoSelezionato = null;
+                return;
+            }
+
+            if (primoSelezionato.dataset.id === tessera.dataset.id && primoSelezionato.dataset.tipo !== tessera.dataset.tipo) {
+                let t1 = primoSelezionato;
+                let t2 = tessera;
+
+                t1.classList.remove('selezionata');
+                t1.classList.add('corretta');
+                t2.classList.add('corretta');
+
+                riproduciSuono('pop');
+                coppieIndovinate++;
+
+                let fraseElemento = t1.dataset.info;
+
+                if (coppieIndovinate === 3) {
+                    setTimeout(() => {
+                        parla(fraseElemento, () => {
+                            setTimeout(() => {
+                                riproduciSuono('vittoria');
+                                parla("Evviva! Hai trovato tutte le coppie!");
+
+                                // Cambia la voce per il prossimo livello!
+                                mischiaPersonalitaVoce();
+
+                                setTimeout(caricaNuovoLivello, 2200);
+                            }, 300);
+                        });
+                    }, 150);
+                } else {
+                    setTimeout(() => { parla(fraseElemento); }, 150);
+                }
+
+                primoSelezionato = null;
+            } else {
+                let t1 = primoSelezionato;
+                let t2 = tessera;
+
+                t1.classList.remove('selezionata');
+                t1.classList.add('scuoti-errore');
+                t2.classList.add('scuoti-errore');
+
+                riproduciSuono('errore');
+                primoSelezionato = null;
+
+                setTimeout(() => {
+                    t1.classList.remove('scuoti-errore');
+                    t2.classList.remove('scuoti-errore');
+                }, 500);
+            }
+        }
+
+        function riproduciSuono(tipo) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            let t = audioCtx.currentTime;
+
+            if (tipo === 'click') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(500, t);
+                gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
+                osc.start(t); osc.stop(t + 0.04);
+            } else if (tipo === 'pop') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(320, t);
+                osc.frequency.exponentialRampToValueAtTime(950, t + 0.08);
+                gain.gain.setValueAtTime(0.25, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+                osc.start(t); osc.stop(t + 0.08);
+            } else if (tipo === 'errore') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(170, t);
+                gain.gain.setValueAtTime(0.25, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+                osc.start(t); osc.stop(t + 0.15);
+            } else if (tipo === 'vittoria') {
+                let note = [261.63, 329.63, 392.00, 523.25];
+                note.forEach((f, i) => {
+                    let o = audioCtx.createOscillator(); let g = audioCtx.createGain();
+                    o.connect(g); g.connect(audioCtx.destination); o.type = 'sine';
+                    o.frequency.setValueAtTime(f, t + (i * 0.07));
+                    g.gain.setValueAtTime(0.12, t + (i * 0.07));
+                    g.gain.exponentialRampToValueAtTime(0.01, t + (i * 0.07) + 0.15);
+                    o.start(t + (i * 0.07)); o.stop(t + (i * 0.07) + 0.15);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

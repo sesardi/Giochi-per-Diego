@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Il Bosco Incantato</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #1a2a6c 0%, #275da3 40%, #52a49a 75%, #387d44 100%);
+            overflow: hidden;
+            font-family: 'Arial Round', 'Comic Sans MS', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* SCENOGRAFIA DEL BOSCO */
+        .sfondo-bosco {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .montagne {
+            position: absolute;
+            bottom: 120px;
+            width: 150%;
+            height: 200px;
+            background: #235252;
+            clip-path: polygon(0% 100%, 15% 40%, 30% 70%, 45% 30%, 65% 75%, 80% 45%, 100% 100%);
+            opacity: 0.4;
+        }
+
+        .colline {
+            position: absolute;
+            bottom: 60px;
+            width: 100%;
+            height: 140px;
+            background: #1b4d22;
+            border-radius: 50% 50% 0 0 / 40% 40% 0 0;
+            transform: scale(1.2) translateY(20px);
+            opacity: 0.7;
+        }
+
+        .prato {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 90px;
+            background: linear-gradient(to bottom, #143d19, #0d2910);
+            z-index: 2;
+        }
+
+        .albero {
+            position: absolute;
+            bottom: 70px;
+            z-index: 2;
+            opacity: 0.85;
+        }
+        .albero-chioma {
+            width: 60px;
+            height: 80px;
+            background: #2e7d32;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            position: relative;
+            box-shadow: inset -8px -8px rgba(0,0,0,0.15);
+        }
+        .albero-tronco {
+            width: 12px;
+            height: 30px;
+            background: #5d4037;
+            margin: -5px auto 0 auto;
+            border-radius: 4px;
+        }
+        .a1 { left: 5%; transform: scale(0.8); }
+        .a2 { left: 15%; transform: scale(1.1); }
+        .a3 { left: 45%; transform: scale(0.7); opacity: 0.6; }
+        .a4 { left: 75%; transform: scale(1.2); }
+        .a5 { left: 88%; transform: scale(0.9); }
+
+        .lucciola {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #fffb00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fffb00, 0 0 20px #fffb00;
+            animation: volaLucciola 6s infinite ease-in-out alternate;
+            z-index: 1;
+        }
+        @keyframes volaLucciola {
+            0% { transform: translate(0, 0) scale(0.8); opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { transform: translate(40px, -60px) scale(1.2); opacity: 0.1; }
+        }
+
+        /* SCHERMATE E INTERFACCIA */
+        #schermata-inizio {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #1a2a6c, #275da3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        #schermata-inizio h1 {
+            color: #ffeaa7;
+            font-size: 3.2rem;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 3px 3px 0px #d35400, 0 0 20px rgba(255,255,255,0.4);
+            font-weight: bold;
+        }
+
+        .sottotitolo {
+            color: #fff;
+            font-size: 1.4rem;
+            margin-bottom: 40px;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+        }
+
+        .btn-gioca {
+            background-color: #2ed573;
+            color: white;
+            border: 4px solid #fff;
+            padding: 15px 50px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 0px #26af5f, 0 15px 25px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        .btn-gioca:active {
+            transform: translateY(10px);
+            box-shadow: 0 0px 0px #26af5f;
+        }
+
+        /* NUOVA TOP BAR ANTI-SOVRAPPOSIZIONE */
+        #top-bar {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 6;
+        }
+
+        /* Contenitore centrale (Domanda per il bambino) */
+        #hud {
+            font-size: 4.5vw; /* Si adatta alla larghezza dello schermo dello smartphone */
+            @media (min-width: 600px) { font-size: 1.6rem; }
+            font-weight: bold;
+            color: #fff;
+            background: rgba(108, 92, 231, 0.95);
+            padding: 8px 18px;
+            border-radius: 30px;
+            box-shadow: 0 5px 0px #4834d4, 0 8px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            flex-grow: 1;
+            margin: 0 10px;
+            max-width: 55%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            backdrop-filter: blur(5px);
+        }
+
+        #bersaglio {
+            color: #fff200;
+            font-size: 1.3em;
+            margin-left: 6px;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* Pulsante Cambio Modalità Ottimizzato */
+        #btn-switch {
+            background: #fdcb6e;
+            border: 3px solid #fff;
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 3.5vw;
+            @media (min-width: 600px) { font-size: 1.2rem; }
+            font-weight: bold;
+            color: #2c3e50;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #e1b12c;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        #btn-switch:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0px #e1b12c;
+        }
+
+        /* Pulsante Audio Ottimizzato */
+        #btn-audio {
+            background: #ff7675;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #e17055;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        #btn-audio:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0px #e17055;
+        }
+
+        /* PALLONCINI */
+        .palloncino {
+            position: absolute;
+            width: 20vw;
+            max-width: 115px;
+            min-width: 85px;
+            aspect-ratio: 1 / 1.25;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
+            box-shadow: inset -8px -8px rgba(0,0,0,0.25), 0 10px 20px rgba(0,0,0,0.3);
+            animation: oscilla 2.5s ease-in-out infinite alternate;
+            z-index: 3;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .palloncino::after {
+            content: "";
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 9px solid var(--color-nodo);
+        }
+
+        .palloncino::before {
+            content: "";
+            position: absolute;
+            top: 12%;
+            left: 12%;
+            width: 25%;
+            height: 15%;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+        }
+
+        @keyframes oscilla {
+            0% { transform: translateX(-5px) rotate(-4deg) translateY(0px); }
+            100% { transform: translateX(5px) rotate(4deg) translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sfondo-bosco">
+        <div class="montagne"></div>
+        <div class="colline"></div>
+        <div class="albero a1"><div class="albero-chioma"></div><div class="albero-tronco"></div></div>
+        <div class="albero a2"><div class="albero-chioma" style="background:#1b5e20;"></div><div class="albero-tronco"></div></div>
+        <div class="albero a3"><div class="albero-chioma"></div><div class="albero-tronco"></div></div>
+        <div class="albero a4"><div class="albero-chioma" style="background:#388e3c;"></div><div class="albero-tronco"></div></div>
+        <div class="albero a5"><div class="albero-chioma"></div><div class="albero-tronco"></div></div>
+
+        <div class="lucciola" style="left: 10%; top: 60%; animation-delay: 0s;"></div>
+        <div class="lucciola" style="left: 30%; top: 45%; animation-delay: 2s;"></div>
+        <div class="lucciola" style="left: 65%; top: 70%; animation-delay: 1s;"></div>
+        <div class="lucciola" style="left: 85%; top: 50%; animation-delay: 3s;"></div>
+
+        <div class="prato"></div>
+    </div>
+
+    <div id="schermata-inizio">
+        <h1>🌲 Il Bosco Incantato 🌲</h1>
+        <div class="sottotitolo">Impara i Numeri e le Lettere</div>
+        <button class="btn-gioca" onclick="iniziaGioco()">GIOCA!</button>
+    </div>
+
+    <div id="top-bar">
+        <button id="btn-switch" onclick="cambiaModalita()">🔤 Lettere</button>
+        <div id="hud"><span id="testo-hud">Trova il numero:</span><span id="bersaglio">1</span></div>
+        <button id="btn-audio" onclick="toggleMusica()">🔊</button>
+    </div>
+
+    <script>
+        let modalitaCorrente = 'numeri';
+        let numeroCorrenteBersaglio = 1;
+        let letteraCorrenteIndex = 0;
+
+        const alfabetoInglese = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+        const colori = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#ff4081', '#00d2d3'];
+
+        let audioCtx = null;
+        let musicaAttiva = true;
+        let musicaInterval = null;
+        const noteMelodia = [261.63, 293.66, 329.63, 392.00, 440.00, 392.00, 329.63, 293.66];
+        let notaCorrenteIndex = 0;
+
+        function iniziaGioco() {
+            document.getElementById('schermata-inizio').style.display = 'none';
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                faiSuonareMusicaSottofondo();
+            } catch(e) { console.log("Audio non supportato"); }
+
+            setTimeout(() => {
+                generaOndataPalloncini(true);
+            }, 500);
+        }
+
+        function parla(testo) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let messaggio = new SpeechSynthesisUtterance(testo);
+                messaggio.lang = 'it-IT';
+                messaggio.pitch = 1.3;
+                messaggio.rate = 0.95;
+                window.speechSynthesis.speak(messaggio);
+            }
+        }
+
+        function cambiaModalita() {
+            rimuoviTuttiIPalloncini();
+            if (modalitaCorrente === 'numeri') {
+                modalitaCorrente = 'lettere';
+                document.getElementById('btn-switch').innerText = '🔢 Numeri';
+                document.getElementById('testo-hud').innerText = 'Trova la lettera:';
+                parla("Giochiamo con le lettere!");
+            } else {
+                modalitaCorrente = 'numeri';
+                document.getElementById('btn-switch').innerText = '🔤 Lettere';
+                document.getElementById('testo-hud').innerText = 'Trova il numero:';
+                parla("Giochiamo con i numeri!");
+            }
+            riproduciSuono('vittoria');
+
+            setTimeout(() => {
+                generaOndataPalloncini(true);
+            }, 2000);
+        }
+
+        function faiSuonareMusicaSottofondo() {
+            musicaInterval = setInterval(() => {
+                if (!musicaAttiva || !audioCtx || audioCtx.state === 'suspended') return;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(noteMelodia[notaCorrenteIndex], audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+                notaCorrenteIndex = (notaCorrenteIndex + 1) % noteMelodia.length;
+            }, 600);
+        }
+
+        function toggleMusica() {
+            musicaAttiva = !musicaAttiva;
+            document.getElementById('btn-audio').innerText = musicaAttiva ? '🔊' : '🔇';
+        }
+
+        function riproduciSuono(tipo) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            let tempoAttuale = audioCtx.currentTime;
+
+            if (tipo === 'pop') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, tempoAttuale);
+                osc.frequency.exponentialRampToValueAtTime(1200, tempoAttuale + 0.08);
+                gain.gain.setValueAtTime(0.3, tempoAttuale);
+                gain.gain.exponentialRampToValueAtTime(0.01, tempoAttuale + 0.08);
+                osc.start(tempoAttuale); osc.stop(tempoAttuale + 0.08);
+            } else if (tipo === 'errore') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, tempoAttuale);
+                osc.frequency.linearRampToValueAtTime(70, tempoAttuale + 0.25);
+                gain.gain.setValueAtTime(0.4, tempoAttuale);
+                gain.gain.exponentialRampToValueAtTime(0.01, tempoAttuale + 0.25);
+                osc.start(tempoAttuale); osc.stop(tempoAttuale + 0.25);
+            } else if (tipo === 'vittoria') {
+                osc.type = 'triangle';
+                let noteVittoria = [261.63, 329.63, 392.00, 523.25];
+                noteVittoria.forEach((frequenza, i) => {
+                    let o = audioCtx.createOscillator(); let g = audioCtx.createGain();
+                    o.connect(g); g.connect(audioCtx.destination); o.type = 'sine';
+                    o.frequency.setValueAtTime(frequenza, tempoAttuale + (i * 0.08));
+                    g.gain.setValueAtTime(0.2, tempoAttuale + (i * 0.08));
+                    g.gain.exponentialRampToValueAtTime(0.01, tempoAttuale + (i * 0.08) + 0.2);
+                    o.start(tempoAttuale + (i * 0.08)); o.stop(tempoAttuale + (i * 0.08) + 0.2);
+                });
+            }
+        }
+
+        function generaOndataPalloncini(parlaSubito = true) {
+            let bersaglioAttuale = modalitaCorrente === 'numeri' ? numeroCorrenteBersaglio : alfabetoInglese[letteraCorrenteIndex];
+            document.getElementById('bersaglio').innerText = bersaglioAttuale;
+
+            if (parlaSubito) {
+                if (modalitaCorrente === 'numeri') {
+                    parla("Trova il numero " + bersaglioAttuale);
+                } else {
+                    parla("Trova la lettera " + bersaglioAttuale);
+                }
+            }
+
+            let elementiDaInserire = [bersaglioAttuale];
+
+            while(elementiDaInserire.length < 4) {
+                let casuale;
+                if (modalitaCorrente === 'numeri') {
+                    casuale = Math.floor(Math.random() * 10) + 1;
+                } else {
+                    casuale = alfabetoInglese[Math.floor(Math.random() * alfabetoInglese.length)];
+                }
+
+                if(!elementiDaInserire.includes(casuale)) {
+                    elementiDaInserire.push(casuale);
+                }
+            }
+
+            elementiDaInserire.sort(() => Math.random() - 0.5);
+
+            let larghezzaSchermo = window.innerWidth;
+            let larghezzaCorsia = larghezzaSchermo / 4;
+
+            elementiDaInserire.forEach((valore, index) => {
+                let palloncino = document.createElement('div');
+                palloncino.className = 'palloncino';
+                palloncino.innerText = valore;
+
+                let coloreScelto = colori[Math.floor(Math.random() * colori.length)];
+                palloncino.style.backgroundColor = coloreScelto;
+                palloncino.style.setProperty('--color-nodo', coloreScelto);
+
+                let centroCorsia = (index * larghezzaCorsia) + (larghezzaCorsia / 2);
+                let metaPalloncino = Math.min(larghezzaSchermo * 0.2, 115) / 2;
+                palloncino.style.left = (centroCorsia - metaPalloncino) + 'px';
+
+                let altezzaDisponibile = window.innerHeight - 340;
+                palloncino.style.top = (140 + Math.random() * altezzaDisponibile) + 'px';
+
+                palloncino.addEventListener('click', function() {
+                    if (valore === bersaglioAttuale) {
+                        riproduciSuono('pop');
+                        palloncino.style.transform = 'scale(1.3)';
+                        palloncino.style.opacity = '0';
+
+                        setTimeout(() => {
+                            palloncino.remove();
+                            rimuoviTuttiIPalloncini();
+
+                            if (modalitaCorrente === 'numeri') {
+                                if(numeroCorrenteBersaglio < 10) {
+                                    numeroCorrenteBersaglio++;
+                                    generaOndataPalloncini(true);
+                                } else {
+                                    riproduciSuono('vittoria');
+                                    parla("Bravissimo! Hai completato tutti i numeri!");
+                                    setTimeout(() => {
+                                        alert("🎉 Bravissimo! Hai trovato tutti i numeri! 🎉");
+                                        numeroCorrenteBersaglio = 1;
+                                        generaOndataPalloncini(true);
+                                    }, 300);
+                                    return;
+                                }
+                            } else {
+                                if(letteraCorrenteIndex < alfabetoInglese.length - 1) {
+                                    letteraCorrenteIndex++;
+                                    generaOndataPalloncini(true);
+                                } else {
+                                    riproduciSuono('vittoria');
+                                    parla("Splendido! Hai completato l'alfabeto!");
+                                    setTimeout(() => {
+                                        alert("🎉 Wonderful! Hai completato tutto l'alfabeto inglese dalla A alla Z! 🎉");
+                                        letteraCorrenteIndex = 0;
+                                        generaOndataPalloncini(true);
+                                    }, 300);
+                                    return;
+                                }
+                            }
+                        }, 200);
+                    } else {
+                        riproduciSuono('errore');
+                        palloncino.animate([
+                            { transform: 'translateX(0px) rotate(-4deg)' },
+                            { transform: 'translateX(-8px) rotate(-8deg)' },
+                            { transform: 'translateX(8px) rotate(8deg)' },
+                            { transform: 'translateX(0px) rotate(-4deg)' }
+                        ], { duration: 200 });
+                    }
+                });
+
+                document.body.appendChild(palloncino);
+            });
+        }
+
+        function rimuoviTuttiIPalloncini() {
+            let elementi = document.querySelectorAll('.palloncino');
+            elementi.forEach(el => el.remove());
+        }
+    </script>
+</body>
+</html>
